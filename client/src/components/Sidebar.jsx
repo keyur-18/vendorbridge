@@ -1,6 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useRecoilValue, useSetRecoilState } from 'recoil';
 import { authUserAtom, authTokenAtom, notificationCountAtom } from '../atoms';
+import { Logo } from './ui';
 import {
   LayoutDashboard, Building2, FileText, ClipboardList,
   CheckSquare, ShoppingBag, Receipt, Activity,
@@ -13,8 +14,8 @@ const navItems = [
   { to: '/rfqs', icon: FileText, label: 'RFQs', roles: ['admin', 'procurement_officer', 'vendor', 'manager'] },
   { to: '/quotations', icon: ClipboardList, label: 'Quotations', roles: ['vendor'] },
   { to: '/approvals', icon: CheckSquare, label: 'Approvals', roles: ['admin', 'procurement_officer', 'manager'] },
-  { to: '/purchase-orders', icon: ShoppingBag, label: 'Purchase Orders', roles: ['admin', 'procurement_officer', 'manager'] },
-  { to: '/invoices', icon: Receipt, label: 'Invoices', roles: ['admin', 'procurement_officer', 'manager'] },
+  { to: '/purchase-orders', icon: ShoppingBag, label: 'Purchase Orders', roles: ['admin', 'procurement_officer', 'manager', 'vendor'] },
+  { to: '/invoices', icon: Receipt, label: 'Invoices', roles: ['admin', 'procurement_officer', 'manager', 'vendor'] },
   { to: '/activity', icon: Activity, label: 'Activity & Logs', roles: ['admin', 'procurement_officer', 'manager'] },
   { to: '/reports', icon: BarChart3, label: 'Reports', roles: ['admin', 'manager'] },
 ];
@@ -55,13 +56,7 @@ export default function Sidebar() {
       {/* Logo */}
       <div style={{ padding: '20px 16px 16px', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #0F766E, #14B8A6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <Zap size={18} color="white" />
-          </div>
+          <Logo size={36} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--color-text)' }}>VendorBridge</div>
             <div style={{ fontSize: 10, color: 'var(--color-text-muted)', fontWeight: 500 }}>PROCUREMENT ERP</div>

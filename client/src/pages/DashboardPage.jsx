@@ -15,7 +15,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from 'recharts';
 
-const COLORS = ['#14B8A6', '#0F766E', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'];
+const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6'];
 
 export default function DashboardPage() {
   const user = useRecoilValue(authUserAtom);
@@ -73,12 +73,16 @@ export default function DashboardPage() {
           <p className="page-subtitle">{new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
-          <Link to="/rfqs/new" className="btn-primary" style={{ textDecoration: 'none' }}>
-            <Plus size={16} /> New RFQ
-          </Link>
-          <Link to="/vendors/new" className="btn-secondary" style={{ textDecoration: 'none' }}>
-            <Building2 size={16} /> Add Vendor
-          </Link>
+          {user?.role !== 'vendor' && (
+            <Link to="/rfqs" state={{ openCreateModal: true }} className="btn-primary" style={{ textDecoration: 'none' }}>
+              <Plus size={16} /> New RFQ
+            </Link>
+          )}
+          {['admin', 'procurement_officer'].includes(user?.role) && (
+            <Link to="/vendors" state={{ openCreateModal: true }} className="btn-secondary" style={{ textDecoration: 'none' }}>
+              <Building2 size={16} /> Add Vendor
+            </Link>
+          )}
         </div>
       </div>
 
@@ -123,11 +127,11 @@ export default function DashboardPage() {
             </div>
             <div style={{ display: 'flex', gap: 16, fontSize: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#14B8A6' }} />
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#6366F1' }} />
                 <span style={{ color: 'var(--color-text-muted)' }}>RFQs</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#0F766E' }} />
+                <div style={{ width: 10, height: 10, borderRadius: 2, background: '#10B981' }} />
                 <span style={{ color: 'var(--color-text-muted)' }}>POs</span>
               </div>
             </div>
@@ -136,20 +140,20 @@ export default function DashboardPage() {
             <AreaChart data={rfqChartData.length > 0 ? rfqChartData : [{ month: 'Jan', RFQs: 3, POs: 1 }, { month: 'Feb', RFQs: 5, POs: 2 }, { month: 'Mar', RFQs: 2, POs: 3 }, { month: 'Apr', RFQs: 8, POs: 4 }]}>
               <defs>
                 <linearGradient id="rfqGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#14B8A6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#14B8A6" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="poGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0F766E" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#0F766E" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.5)" />
-              <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip contentStyle={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8, color: 'var(--color-text)' }} />
-              <Area type="monotone" dataKey="RFQs" stroke="#14B8A6" fill="url(#rfqGrad)" strokeWidth={2} />
-              <Area type="monotone" dataKey="POs" stroke="#0F766E" fill="url(#poGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="RFQs" stroke="#6366F1" fill="url(#rfqGrad)" strokeWidth={2} />
+              <Area type="monotone" dataKey="POs" stroke="#10B981" fill="url(#poGrad)" strokeWidth={2} />
             </AreaChart>
           </ResponsiveContainer>
         </div>

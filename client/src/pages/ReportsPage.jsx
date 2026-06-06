@@ -9,7 +9,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Building2, DollarSign, Package, Download, Star } from 'lucide-react';
 
-const COLORS = ['#14B8A6', '#0F766E', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
+const COLORS = ['#6366F1', '#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload?.length) {
@@ -33,6 +33,7 @@ export default function ReportsPage() {
   const [spending, setSpending] = useState(null);
   const [trends, setTrends] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [activeSection, setActiveSection] = useState('overview');
 
   useEffect(() => {
@@ -56,6 +57,24 @@ export default function ReportsPage() {
     load();
   }, []);
 
+  const handleExportPDF = async () => {
+    setExporting(true);
+    try {
+      const res = await reportsAPI.getPDF();
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Procurement_Report_${new Date().toISOString().slice(0, 10)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Report PDF exported successfully!');
+    } catch (err) {
+      toast.error('Failed to export report PDF');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const monthlyData = (() => {
     const months = {};
     trends?.rfqs?.forEach(d => { const m = new Date(d.month).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }); months[m] = { ...months[m], month: m, RFQs: parseInt(d.count) }; });
@@ -76,8 +95,8 @@ export default function ReportsPage() {
           <h1 className="page-title">Reports & Analytics</h1>
           <p className="page-subtitle">Procurement insights and performance metrics</p>
         </div>
-        <button className="btn-secondary" onClick={() => toast('Export feature — coming soon!')}>
-          <Download size={14} /> Export
+        <button className="btn-secondary" onClick={handleExportPDF} disabled={exporting}>
+          {exporting ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><Download size={14} /> Export</>}
         </button>
       </div>
 
@@ -110,13 +129,13 @@ export default function ReportsPage() {
             <div style={{ fontSize: 12, color: 'var(--color-text-muted)', marginBottom: 20 }}>RFQs, Purchase Orders, and Spend over last 12 months</div>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={monthlyData.length > 0 ? monthlyData : [{ month: 'Jan', RFQs: 3, POs: 1 }, { month: 'Feb', RFQs: 5, POs: 2 }, { month: 'Mar', RFQs: 4, POs: 3 }]} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.5)" />
-                <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: 12, color: '#94A3B8', paddingTop: 16 }} />
-                <Bar dataKey="RFQs" fill="#14B8A6" radius={[4,4,0,0]} />
-                <Bar dataKey="POs" fill="#0F766E" radius={[4,4,0,0]} />
+                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--color-text-muted)', paddingTop: 16 }} />
+                <Bar dataKey="RFQs" fill="#6366F1" radius={[4,4,0,0]} />
+                <Bar dataKey="POs" fill="#10B981" radius={[4,4,0,0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -129,15 +148,15 @@ export default function ReportsPage() {
               <AreaChart data={monthlyData.length > 0 ? monthlyData : [{ month: 'Jan', Spend: 1200000 }, { month: 'Feb', Spend: 3500000 }, { month: 'Mar', Spend: 2800000 }]}>
                 <defs>
                   <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.5)" />
-                <XAxis dataKey="month" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="month" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
                 <Tooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="Spend" stroke="#F59E0B" fill="url(#spendGrad)" strokeWidth={2} name="Spend (₹)" />
+                <Area type="monotone" dataKey="Spend" stroke="#3B82F6" fill="url(#spendGrad)" strokeWidth={2} name="Spend (₹)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -199,11 +218,11 @@ export default function ReportsPage() {
               <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 20 }}>Top Vendors by Spend</div>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={vendorPerf.slice(0, 8).map(v => ({ name: v.company_name?.split(' ')[0], spend: parseFloat(v.total_spend) }))} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(51,65,85,0.5)" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
-                  <YAxis type="category" dataKey="name" tick={{ fill: '#94A3B8', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" horizontal={false} />
+                  <XAxis type="number" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `₹${(v/100000).toFixed(0)}L`} />
+                  <YAxis type="category" dataKey="name" tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} width={80} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="spend" fill="#14B8A6" radius={[0,4,4,0]} name="Total Spend (₹)" />
+                  <Bar dataKey="spend" fill="#6366F1" radius={[0,4,4,0]} name="Total Spend (₹)" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
