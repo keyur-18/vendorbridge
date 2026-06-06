@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import toast from 'react-hot-toast';
 import { rfqsAPI, vendorsAPI } from '../api';
+import { rfqsAtom, rfqFiltersAtom, authUserAtom } from '../atoms';
+import { rfqSchema } from '../schemas';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
 import { LoadingSpinner, EmptyState, formatDate } from '../components/ui';
-import { Plus, FileText, Calendar, Users, Search, Trash2, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, FileText, Calendar, Users, Search, Trash2, Eye } from 'lucide-react';
 
 function RFQForm({ onSubmit, loading }) {
   const [vendors, setVendors] = useState([]);
@@ -22,6 +25,7 @@ function RFQForm({ onSubmit, loading }) {
 
   const handleChange = (e) => {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    if (errors[e.target.name]) setErrors(prev => ({ ...prev, [e.target.name]: null }));
   };
 
   const handleItemChange = (i, field, val) => {
@@ -30,6 +34,7 @@ function RFQForm({ onSubmit, loading }) {
       items[i] = { ...items[i], [field]: val };
       return { ...prev, items };
     });
+    if (errors.items) setErrors(prev => ({ ...prev, items: null }));
   };
 
   const addItem = () => {
@@ -48,13 +53,22 @@ function RFQForm({ onSubmit, loading }) {
   };
 
   const validate = () => {
-    const errs = {};
-    if (!form.title || form.title.length < 5) errs.title = 'Title must be at least 5 characters';
-    if (!form.deadline) errs.deadline = 'Deadline is required';
-    if (form.items.some(i => !i.product_name)) errs.items = 'All items need a product name';
-    if (form.items.some(i => i.quantity <= 0)) errs.items = 'All quantities must be positive';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
+    const payload = {
+      ...form,
+      items: form.items.map(i => ({ ...i, quantity: parseFloat(i.quantity) }))
+    };
+    const result = rfqSchema.safeParse(payload);
+    if (!result.success) {
+      const errs = {};
+      result.error.errors.forEach(e => {
+        const key = e.path[0] === 'items' ? 'items' : e.path[0];
+        errs[key] = e.message;
+      });
+      setErrors(errs);
+      return false;
+    }
+    setErrors({});
+    return true;
   };
 
   const handleSubmit = (e) => {
@@ -141,8 +155,8 @@ function RFQForm({ onSubmit, loading }) {
             {vendors.map(v => (
               <label key={v.id} style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
-                background: form.vendor_ids.includes(v.id) ? 'rgba(20,184,166,0.1)' : 'var(--color-surface-2)',
-                border: form.vendor_ids.includes(v.id) ? '1px solid rgba(20,184,166,0.3)' : '1px solid var(--color-border)',
+                background: form.vendor_ids.includes(v.id) ? 'rgba(99,102,241,0.08)' : 'var(--color-surface-2)',
+                border: form.vendor_ids.includes(v.id) ? '1px solid rgba(99,102,241,0.3)' : '1px solid var(--color-border)',
                 borderRadius: 8, cursor: 'pointer', transition: 'all 0.15s', fontSize: 12
               }}>
                 <input type="checkbox" checked={form.vendor_ids.includes(v.id)} onChange={() => toggleVendor(v.id)} style={{ accentColor: 'var(--color-primary-light)' }} />
@@ -166,13 +180,23 @@ function RFQForm({ onSubmit, loading }) {
 }
 
 export default function RFQsPage() {
-  const [rfqs, setRfqs] = useState([]);
+  const [rfqs, setRfqs] = useRecoilState(rfqsAtom);
+  const [filters, setFilters] = useRecoilState(rfqFiltersAtom);
+  const user = useRecoilValue(authUserAtom);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', status: '' });
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.openCreateModal && user?.role !== 'vendor') {
+      setShowModal(true);
+      // Clear navigation state to prevent re-opening on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, user, navigate]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -185,7 +209,7 @@ export default function RFQsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, setRfqs]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -212,9 +236,11 @@ export default function RFQsPage() {
           <h1 className="page-title">RFQ Management</h1>
           <p className="page-subtitle">{total} total requests for quotation</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={16} /> Create RFQ
-        </button>
+        {user?.role !== 'vendor' && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Create RFQ
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -237,7 +263,7 @@ export default function RFQsPage() {
       {/* RFQ Cards Grid */}
       {loading ? <LoadingSpinner fullPage /> : rfqs.length === 0 ? (
         <EmptyState icon={FileText} title="No RFQs found" description="Create your first Request for Quotation" action={
-          <button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={14} />Create RFQ</button>
+          user?.role !== 'vendor' && <button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={14} />Create RFQ</button>
         } />
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
@@ -247,7 +273,7 @@ export default function RFQsPage() {
                 cursor: 'pointer', transition: 'all 0.2s',
                 borderLeft: `3px solid ${statusColors[rfq.status] || '#94A3B8'}`,
               }}
-              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,0,0,0.2)'; }}
+              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 30px rgba(99,102,241,0.06)'; }}
               onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>

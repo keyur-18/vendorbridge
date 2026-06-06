@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import toast from 'react-hot-toast';
 import { vendorsAPI } from '../api';
+import { vendorsAtom, vendorFiltersAtom, authUserAtom } from '../atoms';
 import { vendorSchema } from '../schemas';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
 import { LoadingSpinner, EmptyState } from '../components/ui';
-import { Search, Plus, Building2, Phone, Mail, MapPin, Star, Edit2, Trash2, Filter, RefreshCw } from 'lucide-react';
+import { Search, Plus, Building2, Phone, Mail, MapPin, Star, Edit2, Trash2, RefreshCw } from 'lucide-react';
 
 const CATEGORIES = ['Electronics', 'Office Supplies', 'IT Services', 'Logistics', 'Furniture', 'Stationery', 'Hardware', 'Software', 'Other'];
 
@@ -19,19 +21,27 @@ function VendorForm({ initial, onSubmit, loading }) {
   const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    let val = e.target.value;
+    if (e.target.name === 'gst_number') {
+      val = val.toUpperCase();
+    }
+    setForm(prev => ({ ...prev, [e.target.name]: val }));
     if (errors[e.target.name]) setErrors(prev => ({ ...prev, [e.target.name]: null }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const result = vendorSchema.safeParse(form);
+    const cleaned = Object.keys(form).reduce((acc, key) => {
+      acc[key] = typeof form[key] === 'string' ? form[key].trim() : form[key];
+      return acc;
+    }, {});
+    const result = vendorSchema.safeParse(cleaned);
     if (!result.success) {
       const errs = {};
       result.error.errors.forEach(e => { errs[e.path[0]] = e.message; });
       return setErrors(errs);
     }
-    onSubmit(form);
+    onSubmit(cleaned);
   };
 
   return (
@@ -106,15 +116,27 @@ function VendorForm({ initial, onSubmit, loading }) {
 }
 
 export default function VendorsPage() {
-  const [vendors, setVendors] = useState([]);
+  const [vendors, setVendors] = useRecoilState(vendorsAtom);
+  const [filters, setFilters] = useRecoilState(vendorFiltersAtom);
+  const user = useRecoilValue(authUserAtom);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', category: '', status: '' });
   const [showModal, setShowModal] = useState(false);
   const [editVendor, setEditVendor] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [page, setPage] = useState(1);
   const limit = 15;
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const isProcurementOrAdmin = ['admin', 'procurement_officer'].includes(user?.role);
+    if (location.state?.openCreateModal && isProcurementOrAdmin) {
+      setShowModal(true);
+      // Clear navigation state to prevent re-opening on page refresh
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location, user, navigate]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -128,7 +150,7 @@ export default function VendorsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filters]);
+  }, [page, filters, setVendors]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -177,6 +199,9 @@ export default function VendorsPage() {
   };
 
   const categoryColors = { Electronics: '#3B82F6', 'IT Services': '#8B5CF6', 'Office Supplies': '#F59E0B', Logistics: '#14B8A6', Furniture: '#22C55E', Other: '#94A3B8' };
+  
+  const canEdit = ['admin', 'procurement_officer'].includes(user?.role);
+  const canDelete = ['admin'].includes(user?.role);
 
   return (
     <Layout>
@@ -185,9 +210,11 @@ export default function VendorsPage() {
           <h1 className="page-title">Vendor Management</h1>
           <p className="page-subtitle">{total} vendors registered</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={16} /> Add Vendor
-        </button>
+        {['admin', 'procurement_officer'].includes(user?.role) && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Add Vendor
+          </button>
+        )}
       </div>
 
       {/* Filters */}
@@ -229,7 +256,7 @@ export default function VendorsPage() {
                   <th>Location</th>
                   <th>Rating</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  {(canEdit || canDelete) && <th>Actions</th>}
                 </tr>
               </thead>
               <tbody>
@@ -277,16 +304,22 @@ export default function VendorsPage() {
                       </div>
                     </td>
                     <td><Badge status={v.status} /></td>
-                    <td>
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => setEditVendor(v)} style={{ background: 'rgba(20,184,166,0.1)', border: '1px solid rgba(20,184,166,0.2)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-primary-light)' }}>
-                          <Edit2 size={13} />
-                        </button>
-                        <button onClick={() => handleDelete(v)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-danger)' }}>
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </td>
+                    {(canEdit || canDelete) && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          {canEdit && (
+                            <button onClick={() => setEditVendor(v)} style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.2)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-primary-light)' }}>
+                              <Edit2 size={13} />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button onClick={() => handleDelete(v)} style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--color-danger)' }}>
+                              <Trash2 size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

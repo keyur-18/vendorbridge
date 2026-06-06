@@ -19,14 +19,14 @@ export default function ApprovalsPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await approvalsAPI.getAll(filter ? { status: filter } : {});
+      const res = await approvalsAPI.getAll({});
       setApprovals(res.data.data);
     } catch (err) {
       toast.error('Failed to load approvals');
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => { load(); }, [load]);
 
@@ -53,6 +53,7 @@ export default function ApprovalsPage() {
   ];
 
   const pendingCount = approvals.filter(a => a.status === 'pending').length;
+  const displayedApprovals = filter ? approvals.filter(a => a.status === filter) : approvals;
 
   return (
     <Layout>
@@ -86,11 +87,11 @@ export default function ApprovalsPage() {
         ))}
       </div>
 
-      {loading ? <LoadingSpinner fullPage /> : approvals.length === 0 ? (
+      {loading ? <LoadingSpinner fullPage /> : displayedApprovals.length === 0 ? (
         <EmptyState icon={CheckSquare} title="No approvals found" description="Approval requests will appear here" />
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {approvals.map(approval => (
+          {displayedApprovals.map(approval => (
             <div key={approval.id} className="card" style={{
               borderLeft: `4px solid ${approval.status === 'pending' ? 'var(--color-warning)' : approval.status === 'approved' ? 'var(--color-success)' : 'var(--color-danger)'}`,
               padding: '18px 20px'

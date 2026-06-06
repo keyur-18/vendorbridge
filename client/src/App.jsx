@@ -55,13 +55,13 @@ function AppRoutes() {
       <Route path="/rfqs/:rfqId/compare" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><QuotationComparePage /></ProtectedRoute>} />
       <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
 
-      {/* Admin + Procurement + Manager */}
+      {/* Admin + Procurement + Manager + Vendor */}
       <Route path="/vendors" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><VendorsPage /></ProtectedRoute>} />
       <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><ApprovalsPage /></ProtectedRoute>} />
-      <Route path="/purchase-orders" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><PurchaseOrdersPage /></ProtectedRoute>} />
-      <Route path="/purchase-orders/:id" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><PODetailPage /></ProtectedRoute>} />
-      <Route path="/invoices" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><InvoicesPage /></ProtectedRoute>} />
-      <Route path="/invoices/:id" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><InvoiceDetailPage /></ProtectedRoute>} />
+      <Route path="/purchase-orders" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><PurchaseOrdersPage /></ProtectedRoute>} />
+      <Route path="/purchase-orders/:id" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><PODetailPage /></ProtectedRoute>} />
+      <Route path="/invoices" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><InvoicesPage /></ProtectedRoute>} />
+      <Route path="/invoices/:id" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><InvoiceDetailPage /></ProtectedRoute>} />
 
       {/* Admin + Manager only */}
       <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin','manager']}><ReportsPage /></ProtectedRoute>} />

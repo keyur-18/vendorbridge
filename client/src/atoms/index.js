@@ -41,3 +41,34 @@ export const rfqFiltersAtom = atom({
   key: 'rfqFilters',
   default: { search: '', status: '' },
 });
+
+export const poFiltersAtom = atom({
+  key: 'poFilters',
+  default: '',
+});
+
+export const invoiceFiltersAtom = atom({
+  key: 'invoiceFilters',
+  default: '',
+});
+
+// ─── Data List Atoms ─────────────────────────────────────────
+export const vendorsAtom = atom({
+  key: 'vendorsList',
+  default: [],
+});
+
+export const rfqsAtom = atom({
+  key: 'rfqsList',
+  default: [],
+});
+
+export const purchaseOrdersAtom = atom({
+  key: 'purchaseOrdersList',
+  default: [],
+});
+
+export const invoicesAtom = atom({
+  key: 'invoicesList',
+  default: [],
+});
