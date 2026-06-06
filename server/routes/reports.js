@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getDashboard, getVendorPerformance, getSpendingSummary, getMonthlyTrends } = require('../controllers/reportController');
+const { getDashboard, getVendorPerformance, getSpendingSummary, getMonthlyTrends, exportPDFReport } = require('../controllers/reportController');
 const { authenticate } = require('../middleware/auth');
 
 router.use(authenticate);
@@ -9,5 +9,6 @@ router.get('/dashboard', getDashboard);
 router.get('/vendor-performance', getVendorPerformance);
 router.get('/spending', getSpendingSummary);
 router.get('/monthly-trends', getMonthlyTrends);
+router.get('/export-pdf', exportPDFReport);
 
 module.exports = router;
