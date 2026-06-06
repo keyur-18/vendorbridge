@@ -6,6 +6,7 @@ import { Eye, EyeOff, Zap, Mail, Lock, ArrowRight } from 'lucide-react';
 import { authTokenAtom, authUserAtom } from '../atoms';
 import { authAPI } from '../api';
 import { loginSchema } from '../schemas';
+import { Logo } from '../components/ui';
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -102,13 +103,8 @@ export default function LoginPage() {
       <div style={{ width: '100%', maxWidth: 440, position: 'relative', zIndex: 1 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16, margin: '0 auto 16px',
-            background: 'linear-gradient(135deg, #0F766E, #14B8A6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 32px rgba(15,118,110,0.4)'
-          }}>
-            <Zap size={28} color="white" />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+            <Logo size={56} />
           </div>
           <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 4px', color: 'var(--color-text)' }}>
             VendorBridge
@@ -196,33 +192,6 @@ export default function LoginPage() {
             <Link to="/signup" style={{ color: 'var(--color-primary-light)', textDecoration: 'none', fontWeight: 600 }}>
               Sign Up
             </Link>
-          </div>
-        </div>
-
-        {/* Demo Credentials */}
-        <div className="card-sm" style={{ marginTop: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--color-text-muted)', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Quick Demo Login
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {[
-              { label: 'Admin', email: 'admin@vendorbridge.com', color: '#EF4444' },
-              { label: 'Procurement', email: 'priya@vendorbridge.com', color: '#14B8A6' },
-              { label: 'Manager', email: 'rahul@vendorbridge.com', color: '#F59E0B' },
-              { label: 'Vendor', email: 'suresh@techsupplies.com', color: '#3B82F6' },
-            ].map(({ label, email, color }) => (
-              <button key={email} onClick={() => demoLogin(email)} disabled={loading} style={{
-                background: `rgba(${color === '#EF4444' ? '239,68,68' : color === '#14B8A6' ? '20,184,166' : color === '#F59E0B' ? '245,158,11' : '59,130,246'},0.08)`,
-                border: `1px solid ${color}33`, borderRadius: 8, padding: '8px 10px',
-                cursor: 'pointer', textAlign: 'left', transition: 'all 0.2s',
-              }}
-              onMouseOver={e => e.currentTarget.style.background = `${color}18`}
-              onMouseOut={e => e.currentTarget.style.background = `${color}10`}
-              >
-                <div style={{ fontSize: 12, fontWeight: 700, color }}>{label}</div>
-                <div style={{ fontSize: 10, color: 'var(--color-text-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
-              </button>
-            ))}
           </div>
         </div>
       </div>
