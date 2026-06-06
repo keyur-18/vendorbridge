@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
 import toast from 'react-hot-toast';
 import { invoicesAPI } from '../api';
+import { authUserAtom } from '../atoms';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
 import { LoadingSpinner, formatDate, formatCurrency } from '../components/ui';
@@ -10,6 +12,7 @@ import { ArrowLeft, Download, Printer, Mail, CheckCircle, Building2 } from 'luci
 export default function InvoiceDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = useRecoilValue(authUserAtom);
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -21,8 +24,7 @@ export default function InvoiceDetailPage() {
   const handleDownload = async () => {
     try {
       const res = await invoicesAPI.getPDF(id);
-      const blob = new Blob([res.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url; a.download = `${invoice.invoice_number}.pdf`; a.click();
       URL.revokeObjectURL(url);
@@ -60,6 +62,8 @@ export default function InvoiceDetailPage() {
   if (loading) return <Layout><LoadingSpinner fullPage /></Layout>;
   if (!invoice) return null;
 
+  const isProcurementOrAdmin = ['admin', 'procurement_officer'].includes(user?.role);
+
   return (
     <Layout>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
@@ -75,10 +79,14 @@ export default function InvoiceDetailPage() {
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn-secondary" onClick={handleDownload}><Download size={14} /> PDF</button>
           <button className="btn-secondary" onClick={() => window.print()}><Printer size={14} /> Print</button>
-          {invoice.status !== 'paid' && <button className="btn-primary" onClick={handleSendEmail} disabled={sending}>
-            {sending ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><Mail size={14} />Send Email</>}
-          </button>}
-          {invoice.status === 'sent' && <button className="btn-success" onClick={handleMarkPaid}><CheckCircle size={14} /> Mark Paid</button>}
+          {invoice.status !== 'paid' && isProcurementOrAdmin && (
+            <button className="btn-primary" onClick={handleSendEmail} disabled={sending}>
+              {sending ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><Mail size={14} />Send Email</>}
+            </button>
+          )}
+          {invoice.status === 'sent' && isProcurementOrAdmin && (
+            <button className="btn-success" onClick={handleMarkPaid}><CheckCircle size={14} /> Mark Paid</button>
+          )}
         </div>
       </div>
 

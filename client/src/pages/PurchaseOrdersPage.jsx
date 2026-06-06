@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import toast from 'react-hot-toast';
 import { purchaseOrdersAPI, invoicesAPI, vendorsAPI, rfqsAPI } from '../api';
+import { purchaseOrdersAtom, poFiltersAtom, authUserAtom } from '../atoms';
+import { poSchema } from '../schemas';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
 import Modal from '../components/Modal';
@@ -37,18 +40,42 @@ function CreatePOForm({ onSubmit, loading }) {
   const taxAmount = (subtotal * parseFloat(form.tax_rate || 0)) / 100;
   const total = subtotal + taxAmount;
 
+  const validate = () => {
+    const payload = {
+      ...form,
+      tax_rate: parseFloat(form.tax_rate) || 0,
+      items: form.items.map(i => ({
+        ...i,
+        quantity: parseFloat(i.quantity) || 0,
+        unit_price: parseFloat(i.unit_price) || 0
+      }))
+    };
+    const result = poSchema.safeParse(payload);
+    if (!result.success) {
+      const errs = {};
+      result.error.errors.forEach(e => {
+        const key = e.path[0] === 'items' ? 'items' : e.path[0];
+        errs[key] = e.message;
+      });
+      setErrors(errs);
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const errs = {};
-    if (!form.vendor_id) errs.vendor_id = 'Vendor is required';
-    if (!form.delivery_address) errs.delivery_address = 'Delivery address is required';
-    if (form.items.some(i => !i.product_name || !i.unit_price)) errs.items = 'All items need a name and price';
-    if (Object.keys(errs).length > 0) return setErrors(errs);
+    if (!validate()) return;
 
     onSubmit({
       ...form,
-      tax_rate: parseFloat(form.tax_rate),
-      items: form.items.map(i => ({ ...i, quantity: parseFloat(i.quantity), unit_price: parseFloat(i.unit_price) }))
+      tax_rate: parseFloat(form.tax_rate) || 0,
+      items: form.items.map(i => ({
+        ...i,
+        quantity: parseFloat(i.quantity) || 0,
+        unit_price: parseFloat(i.unit_price) || 0
+      }))
     });
   };
 
@@ -130,12 +157,13 @@ function CreatePOForm({ onSubmit, loading }) {
 }
 
 export default function PurchaseOrdersPage() {
-  const [pos, setPOs] = useState([]);
+  const [pos, setPOs] = useRecoilState(purchaseOrdersAtom);
+  const [filter, setFilter] = useRecoilState(poFiltersAtom);
+  const user = useRecoilValue(authUserAtom);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [filter, setFilter] = useState('');
   const navigate = useNavigate();
 
   const load = useCallback(async () => {
@@ -149,7 +177,7 @@ export default function PurchaseOrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, setPOs]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -167,6 +195,8 @@ export default function PurchaseOrdersPage() {
     }
   };
 
+  const isProcurementOrAdmin = ['admin', 'procurement_officer'].includes(user?.role);
+
   return (
     <Layout>
       <div className="page-header">
@@ -174,9 +204,11 @@ export default function PurchaseOrdersPage() {
           <h1 className="page-title">Purchase Orders</h1>
           <p className="page-subtitle">{total} purchase orders</p>
         </div>
-        <button className="btn-primary" onClick={() => setShowModal(true)}>
-          <Plus size={16} /> Create PO
-        </button>
+        {isProcurementOrAdmin && (
+          <button className="btn-primary" onClick={() => setShowModal(true)}>
+            <Plus size={16} /> Create PO
+          </button>
+        )}
       </div>
 
       {/* Filter */}
@@ -195,7 +227,9 @@ export default function PurchaseOrdersPage() {
         {loading ? (
           <div style={{ padding: 40, textAlign: 'center' }}><LoadingSpinner /></div>
         ) : pos.length === 0 ? (
-          <EmptyState icon={ShoppingBag} title="No purchase orders" description="Create your first purchase order" />
+          <EmptyState icon={ShoppingBag} title="No purchase orders" description="Create your first purchase order" action={
+            isProcurementOrAdmin && <button className="btn-primary" onClick={() => setShowModal(true)}><Plus size={14} />Create PO</button>
+          } />
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table className="data-table">

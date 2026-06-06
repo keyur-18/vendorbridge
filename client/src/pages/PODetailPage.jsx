@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useRecoilValue } from 'recoil';
 import toast from 'react-hot-toast';
 import { purchaseOrdersAPI, invoicesAPI } from '../api';
+import { authUserAtom } from '../atoms';
 import Layout from '../components/Layout';
 import Badge from '../components/Badge';
 import { LoadingSpinner, formatDate, formatCurrency } from '../components/ui';
@@ -10,6 +12,7 @@ import { ArrowLeft, FileText, Printer, Mail, Download, Plus, Building2, MapPin }
 export default function PODetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const user = useRecoilValue(authUserAtom);
   const [po, setPO] = useState(null);
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -49,32 +52,30 @@ export default function PODetailPage() {
   };
 
   const handleDownloadPDF = async () => {
-    if (!invoice) return;
     try {
-      const res = await invoicesAPI.getPDF(invoice.id);
-      const blob = new Blob([res.data], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
+      const res = await purchaseOrdersAPI.getPDF(id);
+      const url = URL.createObjectURL(res.data);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${invoice.invoice_number || 'invoice'}.pdf`;
+      a.download = `${po.po_number || 'purchase_order'}.pdf`;
       a.click();
       URL.revokeObjectURL(url);
+      toast.success('PO PDF downloaded!');
     } catch (err) {
-      toast.error('Failed to download PDF');
+      toast.error('Failed to download PO PDF');
     }
   };
 
   const handlePrint = () => window.print();
 
   const handleSendEmail = async () => {
-    if (!invoice) return;
     setSending(true);
     try {
-      await invoicesAPI.sendEmail(invoice.id);
-      toast.success('Invoice sent via email!');
+      await purchaseOrdersAPI.sendEmail(id);
+      toast.success('Purchase Order sent via email!');
       load();
     } catch (err) {
-      toast.error('Failed to send email');
+      toast.error('Failed to send PO email');
     } finally {
       setSending(false);
     }
@@ -82,6 +83,8 @@ export default function PODetailPage() {
 
   if (loading) return <Layout><LoadingSpinner fullPage /></Layout>;
   if (!po) return null;
+
+  const isProcurementOrAdmin = ['admin', 'procurement_officer'].includes(user?.role);
 
   return (
     <Layout>
@@ -97,23 +100,21 @@ export default function PODetailPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
-          {!invoice && (
+          <button className="btn-secondary" onClick={handleDownloadPDF} title="Download PO PDF">
+            <Download size={14} /> PDF
+          </button>
+          <button className="btn-secondary" onClick={handlePrint} title="Print">
+            <Printer size={14} /> Print
+          </button>
+          {isProcurementOrAdmin && (
+            <button className="btn-primary" onClick={handleSendEmail} disabled={sending} title="Send via Email">
+              {sending ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><Mail size={14} />Send Email</>}
+            </button>
+          )}
+          {!invoice && isProcurementOrAdmin && (
             <button className="btn-primary" onClick={handleCreateInvoice} disabled={creating}>
               {creating ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><FileText size={14} />Generate Invoice</>}
             </button>
-          )}
-          {invoice && (
-            <>
-              <button className="btn-secondary" onClick={handleDownloadPDF} title="Download PDF">
-                <Download size={14} /> PDF
-              </button>
-              <button className="btn-secondary" onClick={handlePrint} title="Print">
-                <Printer size={14} /> Print
-              </button>
-              <button className="btn-primary" onClick={handleSendEmail} disabled={sending} title="Send via Email">
-                {sending ? <div className="spinner" style={{ width: 14, height: 14, borderWidth: 2 }} /> : <><Mail size={14} />Send Email</>}
-              </button>
-            </>
           )}
         </div>
       </div>

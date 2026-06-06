@@ -37,6 +37,7 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   getMe: () => api.get('/auth/me'),
+  getManagers: () => api.get('/auth/managers'),
 };
 
 // ─── Vendors ──────────────────────────────────────────────────
@@ -78,6 +79,8 @@ export const purchaseOrdersAPI = {
   getAll: (params) => api.get('/purchase-orders', { params }),
   getById: (id) => api.get(`/purchase-orders/${id}`),
   create: (data) => api.post('/purchase-orders', data),
+  getPDF: (id) => api.get(`/purchase-orders/${id}/pdf`, { responseType: 'blob' }),
+  sendEmail: (id) => api.post(`/purchase-orders/${id}/send-email`),
   updateStatus: (id, status) => api.put(`/purchase-orders/${id}/status`, { status }),
 };
 
@@ -97,6 +100,7 @@ export const reportsAPI = {
   getVendorPerformance: () => api.get('/reports/vendor-performance'),
   getSpending: () => api.get('/reports/spending'),
   getMonthlyTrends: () => api.get('/reports/monthly-trends'),
+  getPDF: () => api.get('/reports/export-pdf', { responseType: 'blob' }),
 };
 
 // ─── Logs & Notifications ────────────────────────────────────
