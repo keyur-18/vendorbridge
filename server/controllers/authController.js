@@ -14,8 +14,8 @@ const register = async (req, res) => {
   if (password.length < 8) {
     return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
   }
-  // Prevent users from self-registering as admin; admin accounts must be created by an existing admin or seeded.
-  const allowedRoles = ['procurement_officer', 'vendor', 'manager'];
+  // Allow users to register with any role
+  const allowedRoles = ['procurement_officer', 'vendor', 'manager', 'admin'];
   if (!allowedRoles.includes(role)) {
     return res.status(400).json({ success: false, message: 'Invalid role or registration for this role is restricted' });
   }
@@ -35,6 +35,21 @@ const register = async (req, res) => {
     );
 
     const user = result.rows[0];
+    
+    // Automatically link or create vendor profile for vendor users
+    if (role === 'vendor') {
+      const existingVendor = await pool.query('SELECT id FROM vendors WHERE email = $1', [email]);
+      if (existingVendor.rowCount > 0) {
+        await pool.query('UPDATE vendors SET user_id = $1 WHERE id = $2', [user.id, existingVendor.rows[0].id]);
+      } else {
+        await pool.query(
+          `INSERT INTO vendors (user_id, company_name, email, contact_person, status)
+           VALUES ($1, $2, $3, $4, 'active')`,
+          [user.id, name, email, name]
+        );
+      }
+    }
+
     const token = generateToken(user.id);
 
     await logActivity(user.id, 'REGISTER', 'user', user.id, `User registered: ${email}`);
@@ -101,4 +116,15 @@ const forgotPassword = async (req, res) => {
   res.json({ success: true, message: 'If this email is registered, a reset link will be sent' });
 };
 
-module.exports = { register, login, getMe, forgotPassword };
+// GET /api/auth/managers
+const getManagers = async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, name, email FROM users WHERE role = \'manager\' AND is_active = true ORDER BY name');
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    console.error('Get managers error:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch managers' });
+  }
+};
+
+module.exports = { register, login, getMe, forgotPassword, getManagers };

@@ -61,6 +61,22 @@ const getRFQs = async (req, res) => {
 // GET /api/rfqs/:id
 const getRFQById = async (req, res) => {
   try {
+    let vendorId = null;
+    if (req.user.role === 'vendor') {
+      const vendorResult = await pool.query('SELECT id FROM vendors WHERE user_id = $1', [req.user.id]);
+      if (vendorResult.rowCount === 0) {
+        return res.status(403).json({ success: false, message: 'Vendor profile not found' });
+      }
+      vendorId = vendorResult.rows[0].id;
+      const inviteCheck = await pool.query(
+        'SELECT 1 FROM rfq_vendors WHERE rfq_id = $1 AND vendor_id = $2',
+        [req.params.id, vendorId]
+      );
+      if (inviteCheck.rowCount === 0) {
+        return res.status(403).json({ success: false, message: 'You are not invited to this RFQ' });
+      }
+    }
+
     const rfqResult = await pool.query(
       `SELECT r.*, u.name as created_by_name FROM rfqs r
        LEFT JOIN users u ON r.created_by = u.id WHERE r.id = $1`,
@@ -78,9 +94,14 @@ const getRFQById = async (req, res) => {
       [req.params.id]
     );
 
+    let vendorsList = vendors.rows;
+    if (req.user.role === 'vendor') {
+      vendorsList = vendorsList.filter(v => v.vendor_id === vendorId);
+    }
+
     res.json({
       success: true,
-      data: { ...rfqResult.rows[0], items: items.rows, vendors: vendors.rows }
+      data: { ...rfqResult.rows[0], items: items.rows, vendors: vendorsList }
     });
   } catch (err) {
     console.error('Get RFQ error:', err);
