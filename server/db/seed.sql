@@ -1,14 +1,9 @@
--- VendorBridge Seed Data
--- Run after schema.sql: psql -U postgres -d vendorbridge -f seed.sql
 
--- Clear existing data (in order to respect FK constraints)
 TRUNCATE TABLE notifications, activity_logs, invoices, po_items, purchase_orders, 
   approvals, quotation_items, quotations, rfq_vendors, rfq_items, rfqs, 
   vendors, users RESTART IDENTITY CASCADE;
 
 -- ============================================================
--- USERS (password for all: "Password123!")
--- bcrypt hash of "Password123!"
 -- ============================================================
 INSERT INTO users (id, name, email, password_hash, role) VALUES
   ('11111111-0000-0000-0000-000000000001', 'Admin User', 'admin@vendorbridge.com', '$2a$10$jzbVTIt2DSaXKXKnm1MIeemN6q8w6FitNaqhRR4g.D43mVtvYKOCq', 'admin'),
@@ -28,7 +23,6 @@ INSERT INTO vendors (id, user_id, company_name, category, gst_number, contact_pe
   ('22222222-0000-0000-0000-000000000005', NULL, 'Green Office Furniture', 'Furniture', '33UVWXY7890R5O9', 'Mohan Das', '+91-9876543214', 'mohan@greenoffice.com', '654 Industrial Area', 'Chennai', 'Tamil Nadu', '600001', 'inactive', 3.5);
 
 -- ============================================================
--- RFQs
 -- ============================================================
 INSERT INTO rfqs (id, rfq_number, title, description, created_by, status, deadline) VALUES
   ('33333333-0000-0000-0000-000000000001', 'RFQ-2024-001', 'Office Laptop Procurement', 'Procurement of 50 laptops for development team with 16GB RAM, 512GB SSD', '11111111-0000-0000-0000-000000000002', 'awarded', NOW() - INTERVAL '10 days'),

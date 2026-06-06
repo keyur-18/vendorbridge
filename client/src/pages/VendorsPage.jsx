@@ -133,7 +133,6 @@ export default function VendorsPage() {
     const isProcurementOrAdmin = ['admin', 'procurement_officer'].includes(user?.role);
     if (location.state?.openCreateModal && isProcurementOrAdmin) {
       setShowModal(true);
-      // Clear navigation state to prevent re-opening on page refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, user, navigate]);

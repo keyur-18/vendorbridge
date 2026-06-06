@@ -7,21 +7,18 @@ const { logActivity } = require('../middleware/logger');
 const register = async (req, res) => {
   const { name, email, password, role = 'procurement_officer' } = req.body;
 
-  // Validate
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
   }
   if (password.length < 8) {
     return res.status(400).json({ success: false, message: 'Password must be at least 8 characters' });
   }
-  // Allow users to register with any role
   const allowedRoles = ['procurement_officer', 'vendor', 'manager', 'admin'];
   if (!allowedRoles.includes(role)) {
     return res.status(400).json({ success: false, message: 'Invalid role or registration for this role is restricted' });
   }
 
   try {
-    // Check duplicate email
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rowCount > 0) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
@@ -36,7 +33,6 @@ const register = async (req, res) => {
 
     const user = result.rows[0];
     
-    // Automatically link or create vendor profile for vendor users
     if (role === 'vendor') {
       const existingVendor = await pool.query('SELECT id FROM vendors WHERE email = $1', [email]);
       if (existingVendor.rowCount > 0) {
@@ -112,7 +108,6 @@ const forgotPassword = async (req, res) => {
   if (!email) {
     return res.status(400).json({ success: false, message: 'Email is required' });
   }
-  // Mock response - in production would send email with reset link
   res.json({ success: true, message: 'If this email is registered, a reset link will be sent' });
 };
 

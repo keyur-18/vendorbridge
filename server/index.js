@@ -15,14 +15,12 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Static uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ─── Routes ──────────────────────────────────────────────────
-// Apply a rate limiter to auth routes to mitigate brute-force / credential stuffing
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 20, // limit each IP
+  windowMs: 15 * 60 * 1000,
+  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 20,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many requests from this IP, please try again later.' },

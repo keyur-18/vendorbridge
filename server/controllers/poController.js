@@ -111,7 +111,6 @@ const createPO = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Generate PO number
     const countResult = await client.query('SELECT COUNT(*) FROM purchase_orders');
     const count = parseInt(countResult.rows[0].count) + 1;
     const poNumber = `PO-${new Date().getFullYear()}-${String(count).padStart(3, '0')}`;
@@ -181,11 +180,9 @@ const generatePOPDFBuffer = (po, items) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', err => reject(err));
 
-      // Header Info (Left)
       doc.fontSize(22).fillColor('#0F766E').font('Helvetica-Bold').text('VendorBridge', 50, 50);
       doc.fontSize(9).fillColor('#64748B').font('Helvetica').text('Procurement & Vendor Management ERP', 50, 75);
 
-      // PO Header Metadata (Right)
       doc.fontSize(20).fillColor('#1E293B').font('Helvetica-Bold').text('PURCHASE ORDER', 350, 50, { align: 'right', width: 200 });
       doc.fontSize(9).fillColor('#475569').font('Helvetica');
       doc.text(`PO #: ${po.po_number}`, 350, 75, { align: 'right', width: 200 });
@@ -193,10 +190,8 @@ const generatePOPDFBuffer = (po, items) => {
       doc.text(`Date: ${new Date(po.created_at).toLocaleDateString('en-IN')}`, 350, 105, { align: 'right', width: 200 });
       doc.text(`Status: ${po.status.toUpperCase()}`, 350, 120, { align: 'right', width: 200 });
 
-      // Clean horizontal divider line
       doc.moveTo(50, 145).lineTo(550, 145).strokeColor('#E2E8F0').lineWidth(1).stroke();
 
-      // Vendor Info (Left) & Delivery To (Right) Grid
       const infoY = 160;
       doc.fontSize(9).fillColor('#64748B').font('Helvetica-Bold').text('VENDOR:', 50, infoY);
       doc.fontSize(11).fillColor('#1E293B').font('Helvetica-Bold').text(po.company_name, 50, infoY + 15);
@@ -212,10 +207,8 @@ const generatePOPDFBuffer = (po, items) => {
       doc.fontSize(9).fillColor('#475569').font('Helvetica');
       doc.text(po.delivery_address || 'Company Headquarters Address', 300, infoY + 30, { width: 250 });
 
-      // Clean horizontal divider line
       doc.moveTo(50, 260).lineTo(550, 260).strokeColor('#E2E8F0').lineWidth(1).stroke();
 
-      // Table Header
       const tableTop = 275;
       doc.fillColor('#0F766E').rect(50, tableTop, 500, 22).fill();
       doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold');
@@ -224,7 +217,6 @@ const generatePOPDFBuffer = (po, items) => {
       doc.text('Unit Price', 330, tableTop + 6, { width: 90, align: 'right' });
       doc.text('Total', 440, tableTop + 6, { width: 100, align: 'right' });
 
-      // Table Rows
       let y = tableTop + 22;
       items.forEach((item, i) => {
         if (i % 2 === 0) {
@@ -238,12 +230,10 @@ const generatePOPDFBuffer = (po, items) => {
         y += 20;
       });
 
-      // Divider line below table
       y += 10;
       doc.moveTo(50, y).lineTo(550, y).strokeColor('#E2E8F0').lineWidth(1).stroke();
       y += 15;
 
-      // Totals Section
       doc.fontSize(9).fillColor('#64748B').font('Helvetica');
       doc.text('Subtotal:', 340, y, { width: 100, align: 'right' });
       doc.fontSize(9).fillColor('#1E293B').font('Helvetica-Bold').text(`INR ${Number(po.subtotal).toLocaleString('en-IN')}`, 440, y, { width: 100, align: 'right' });
@@ -259,7 +249,6 @@ const generatePOPDFBuffer = (po, items) => {
       doc.fontSize(11).fillColor('#0F766E').font('Helvetica-Bold').text('TOTAL:', 340, y, { width: 100, align: 'right' });
       doc.fontSize(11).fillColor('#0F766E').font('Helvetica-Bold').text(`INR ${Number(po.total_amount).toLocaleString('en-IN')}`, 440, y, { width: 100, align: 'right' });
 
-      // Terms & Conditions section if present
       if (po.terms) {
         y += 35;
         if (y < 680) {
@@ -268,7 +257,6 @@ const generatePOPDFBuffer = (po, items) => {
         }
       }
 
-      // Footer
       doc.fontSize(8).fillColor('#94A3B8').font('Helvetica').text('Thank you for your business — VendorBridge ERP', 50, 720, { align: 'center' });
       doc.end();
     } catch (err) {
@@ -342,7 +330,6 @@ const sendPOEmail = async (req, res) => {
 
     const pdfBuffer = await generatePOPDFBuffer(po, items.rows);
 
-    // Update status to issued if it was draft
     if (po.status === 'draft') {
       await pool.query(`UPDATE purchase_orders SET status = 'issued', issued_at = NOW() WHERE id = $1`, [req.params.id]);
     }

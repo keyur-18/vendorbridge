@@ -10,7 +10,6 @@ const getRFQs = async (req, res) => {
     let params = [];
     let idx = 1;
 
-    // Vendor can only see RFQs they're invited to
     if (req.user.role === 'vendor') {
       const vendorResult = await pool.query('SELECT id FROM vendors WHERE user_id = $1', [req.user.id]);
       if (vendorResult.rowCount === 0) {
@@ -121,7 +120,6 @@ const createRFQ = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Generate RFQ number
     const countResult = await client.query('SELECT COUNT(*) FROM rfqs');
     const count = parseInt(countResult.rows[0].count) + 1;
     const rfqNumber = `RFQ-${new Date().getFullYear()}-${String(count).padStart(3, '0')}`;
@@ -133,7 +131,6 @@ const createRFQ = async (req, res) => {
     );
     const rfq = rfqResult.rows[0];
 
-    // Insert items
     for (const item of items) {
       await client.query(
         `INSERT INTO rfq_items (rfq_id, product_name, quantity, unit, specifications)
@@ -142,13 +139,11 @@ const createRFQ = async (req, res) => {
       );
     }
 
-    // Invite vendors
     for (const vendorId of vendor_ids) {
       await client.query(
         `INSERT INTO rfq_vendors (rfq_id, vendor_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
         [rfq.id, vendorId]
       );
-      // Get vendor user_id for notification
       const vendorUser = await client.query('SELECT user_id FROM vendors WHERE id = $1', [vendorId]);
       if (vendorUser.rowCount > 0 && vendorUser.rows[0].user_id) {
         await createNotification(
@@ -214,7 +209,6 @@ const inviteVendors = async (req, res) => {
       );
     }
 
-    // Update status to open
     await pool.query(`UPDATE rfqs SET status = 'open' WHERE id = $1 AND status = 'draft'`, [req.params.id]);
     await logActivity(req.user.id, 'INVITE', 'rfq', req.params.id, `Invited ${vendor_ids.length} vendors`);
     res.json({ success: true, message: `Invited ${vendor_ids.length} vendors` });

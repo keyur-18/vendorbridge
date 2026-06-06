@@ -48,7 +48,6 @@ export function ErrorBoundaryFallback({ message = 'Something went wrong' }) {
   );
 }
 
-// Currency formatter for INR
 export const formatCurrency = (amount) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -57,7 +56,6 @@ export const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
-// Date formatter
 export const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -65,7 +63,6 @@ export const formatDate = (dateStr) => {
   });
 };
 
-// Relative time
 export const formatRelative = (dateStr) => {
   if (!dateStr) return '—';
   const now = new Date();
@@ -106,7 +103,6 @@ export function Logo({ size = 36 }) {
             <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
           </radialGradient>
 
-          {/* Compound Mask for Monogram (Trim under deck & Cut out B-counters) */}
           <mask id="monogramMask">
             {/* White base (visible) */}
             <rect width="100" height="100" fill="white" />

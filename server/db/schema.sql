@@ -1,7 +1,4 @@
--- VendorBridge Database Schema
--- Run: psql -U postgres -c "CREATE DATABASE vendorbridge;" then psql -U postgres -d vendorbridge -f schema.sql
 
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================
@@ -44,7 +41,6 @@ CREATE TABLE IF NOT EXISTS vendors (
 );
 
 -- ============================================================
--- RFQs (Request for Quotations)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS rfqs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -249,7 +245,6 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Auto-update updated_at triggers
 CREATE OR REPLACE TRIGGER update_users_updated_at BEFORE UPDATE ON users
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE OR REPLACE TRIGGER update_vendors_updated_at BEFORE UPDATE ON vendors

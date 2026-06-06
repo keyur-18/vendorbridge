@@ -9,9 +9,6 @@ if (!JWT_SECRET) {
   console.warn('Warning: JWT_SECRET is not set. Falling back to a development-only secret. Do not use in production.');
 }
 
-/**
- * Authenticate JWT token from Authorization header
- */
 const authenticate = async (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
@@ -37,9 +34,6 @@ const authenticate = async (req, res, next) => {
   }
 };
 
-/**
- * Authorize specific roles
- */
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!req.user) {
@@ -55,9 +49,6 @@ const authorize = (...roles) => {
   };
 };
 
-/**
- * Generate JWT token
- */
 const generateToken = (userId) => {
   return jwt.sign({ userId }, JWT_SECRET || 'vendorbridge_dev_fallback', { expiresIn: '7d' });
 };
