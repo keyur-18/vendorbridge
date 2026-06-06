@@ -257,16 +257,13 @@ const exportPDFReport = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="Procurement_Report_${new Date().toISOString().slice(0, 10)}.pdf"`);
     doc.pipe(res);
 
-    // Header
     doc.fontSize(24).fillColor('#4F46E5').text('VendorBridge', 50, 50);
     doc.fontSize(10).fillColor('#64748B').text('Procurement & Vendor Management ERP', 50, 80);
     doc.lineWidth(1.5).moveTo(50, 95).lineTo(550, 95).strokeColor('#4F46E5').stroke();
 
-    // Title
     doc.fontSize(18).fillColor('#0F172A').text('EXECUTIVE PROCUREMENT & ANALYTICS REPORT', 50, 115, { align: 'center' });
     doc.fontSize(9).fillColor('#64748B').text(`Generated on: ${new Date().toLocaleString('en-IN')}`, 50, 135, { align: 'center' });
 
-    // Stats Section
     doc.fontSize(13).fillColor('#4F46E5').text('1. Key Performance Metrics', 50, 160);
     doc.lineWidth(1).moveTo(50, 178).lineTo(550, 178).strokeColor('#E2E8F0').stroke();
 
@@ -287,13 +284,11 @@ const exportPDFReport = async (req, res) => {
       y += 22;
     });
 
-    // Spending by Category Section
     y += 15;
     doc.fontSize(13).fillColor('#4F46E5').text('2. Spending by Vendor Category', 50, y);
     doc.lineWidth(1).moveTo(50, y + 18).lineTo(550, y + 18).strokeColor('#E2E8F0').stroke();
     y += 28;
 
-    // Table Header
     doc.fillColor('#F8FAFC').rect(50, y, 500, 20).fill();
     doc.fontSize(9).fillColor('#4F46E5').font('Helvetica-Bold');
     doc.text('Category', 60, y + 5);
@@ -316,7 +311,6 @@ const exportPDFReport = async (req, res) => {
       y += 18;
     });
 
-    // Page 2: Vendor Performance Rankings
     doc.addPage();
     doc.fontSize(24).fillColor('#4F46E5').text('VendorBridge', 50, 50);
     doc.fontSize(10).fillColor('#64748B').text('Procurement & Vendor Management ERP', 50, 80);
@@ -326,7 +320,6 @@ const exportPDFReport = async (req, res) => {
     doc.lineWidth(1).moveTo(50, 133).lineTo(550, 133).strokeColor('#E2E8F0').stroke();
     
     y = 150;
-    // Table Header
     doc.fillColor('#F8FAFC').rect(50, y, 500, 20).fill();
     doc.fontSize(9).fillColor('#4F46E5').font('Helvetica-Bold');
     doc.text('Rank', 55, y + 5);
@@ -352,7 +345,6 @@ const exportPDFReport = async (req, res) => {
       y += 18;
     });
 
-    // Footer note
     doc.fontSize(8).fillColor('#94A3B8').text('Confidential — For Internal Use Only', 50, 720, { align: 'center' });
     doc.end();
 

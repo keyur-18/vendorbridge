@@ -22,11 +22,9 @@ const generatePDFBuffer = (invoice, items) => {
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', err => reject(err));
 
-      // Header Info (Left)
       doc.fontSize(22).fillColor('#0F766E').font('Helvetica-Bold').text('VendorBridge', 50, 50);
       doc.fontSize(9).fillColor('#64748B').font('Helvetica').text('Procurement & Vendor Management ERP', 50, 75);
 
-      // Invoice Header Metadata (Right)
       doc.fontSize(20).fillColor('#1E293B').font('Helvetica-Bold').text('INVOICE', 400, 50, { align: 'right', width: 150 });
       doc.fontSize(9).fillColor('#475569').font('Helvetica');
       doc.text(`Invoice #: ${invoice.invoice_number}`, 400, 75, { align: 'right', width: 150 });
@@ -34,10 +32,8 @@ const generatePDFBuffer = (invoice, items) => {
       doc.text(`Date: ${new Date(invoice.created_at).toLocaleDateString('en-IN')}`, 400, 105, { align: 'right', width: 150 });
       doc.text(`Status: ${invoice.status.toUpperCase()}`, 400, 120, { align: 'right', width: 150 });
 
-      // Clean horizontal divider line
       doc.moveTo(50, 145).lineTo(550, 145).strokeColor('#E2E8F0').lineWidth(1).stroke();
 
-      // Bill To (Left) & Ship To (Right) Grid
       const infoY = 160;
       doc.fontSize(9).fillColor('#64748B').font('Helvetica-Bold').text('BILL TO:', 50, infoY);
       doc.fontSize(11).fillColor('#1E293B').font('Helvetica-Bold').text(invoice.company_name, 50, infoY + 15);
@@ -53,10 +49,8 @@ const generatePDFBuffer = (invoice, items) => {
       doc.fontSize(9).fillColor('#475569').font('Helvetica');
       doc.text(invoice.delivery_address || 'Company Headquarters Address', 300, infoY + 30, { width: 250 });
 
-      // Clean horizontal divider line
       doc.moveTo(50, 260).lineTo(550, 260).strokeColor('#E2E8F0').lineWidth(1).stroke();
 
-      // Table Header
       const tableTop = 275;
       doc.fillColor('#0F766E').rect(50, tableTop, 500, 22).fill();
       doc.fillColor('#FFFFFF').fontSize(9).font('Helvetica-Bold');
@@ -65,10 +59,8 @@ const generatePDFBuffer = (invoice, items) => {
       doc.text('Unit Price', 330, tableTop + 6, { width: 90, align: 'right' });
       doc.text('Total', 440, tableTop + 6, { width: 100, align: 'right' });
 
-      // Table Rows
       let y = tableTop + 22;
       items.rows.forEach((item, i) => {
-        // Alternate row background coloring
         if (i % 2 === 0) {
           doc.fillColor('#F8FAFC').rect(50, y, 500, 20).fill();
         }
@@ -80,12 +72,10 @@ const generatePDFBuffer = (invoice, items) => {
         y += 20;
       });
 
-      // Divider line below table
       y += 10;
       doc.moveTo(50, y).lineTo(550, y).strokeColor('#E2E8F0').lineWidth(1).stroke();
       y += 15;
 
-      // Totals Section
       doc.fontSize(9).fillColor('#64748B').font('Helvetica');
       doc.text('Subtotal:', 340, y, { width: 100, align: 'right' });
       doc.fontSize(9).fillColor('#1E293B').font('Helvetica-Bold').text(`INR ${Number(invoice.subtotal).toLocaleString('en-IN')}`, 440, y, { width: 100, align: 'right' });
@@ -101,7 +91,6 @@ const generatePDFBuffer = (invoice, items) => {
       doc.fontSize(11).fillColor('#0F766E').font('Helvetica-Bold').text('TOTAL:', 340, y, { width: 100, align: 'right' });
       doc.fontSize(11).fillColor('#0F766E').font('Helvetica-Bold').text(`INR ${Number(invoice.total_amount).toLocaleString('en-IN')}`, 440, y, { width: 100, align: 'right' });
 
-      // Footer
       doc.fontSize(8).fillColor('#94A3B8').font('Helvetica').text('Thank you for your business — VendorBridge ERP', 50, 720, { align: 'center' });
       doc.end();
     } catch (err) {
@@ -201,20 +190,17 @@ const createInvoice = async (req, res) => {
   }
 
   try {
-    // Get PO details
     const poResult = await pool.query('SELECT * FROM purchase_orders WHERE id = $1', [po_id]);
     if (poResult.rowCount === 0) {
       return res.status(404).json({ success: false, message: 'Purchase order not found' });
     }
     const po = poResult.rows[0];
 
-    // Check if invoice already exists
     const existing = await pool.query('SELECT id FROM invoices WHERE po_id = $1', [po_id]);
     if (existing.rowCount > 0) {
       return res.status(409).json({ success: false, message: 'Invoice already exists for this PO' });
     }
 
-    // Generate invoice number
     const countResult = await pool.query('SELECT COUNT(*) FROM invoices');
     const count = parseInt(countResult.rows[0].count) + 1;
     const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count).padStart(3, '0')}`;

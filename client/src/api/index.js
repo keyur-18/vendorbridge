@@ -3,13 +3,11 @@ import toast from 'react-hot-toast';
 
 const API_BASE = '/api';
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor — attach JWT token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('vb_token');
   if (token) {
@@ -18,7 +16,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor — handle auth errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {

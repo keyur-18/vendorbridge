@@ -21,7 +21,7 @@ import InvoiceDetailPage from './pages/InvoiceDetailPage';
 import ActivityPage from './pages/ActivityPage';
 import ReportsPage from './pages/ReportsPage';
 
-// Protected Route wrapper
+// Protected Routes
 function ProtectedRoute({ children, allowedRoles }) {
   const isAuth = useRecoilValue(isAuthenticatedSelector);
   const user = useRecoilValue(authUserAtom);
@@ -33,7 +33,7 @@ function ProtectedRoute({ children, allowedRoles }) {
   return children;
 }
 
-// Public Route (redirect to dashboard if logged in)
+// Public Routes
 function PublicRoute({ children }) {
   const isAuth = useRecoilValue(isAuthenticatedSelector);
   if (isAuth) return <Navigate to="/dashboard" replace />;
@@ -48,14 +48,14 @@ function AppRoutes() {
       <Route path="/signup" element={<PublicRoute><SignupPage /></PublicRoute>} />
       <Route path="/forgot-password" element={<PublicRoute><LoginPage /></PublicRoute>} />
 
-      {/* Protected — all authenticated users */}
+      {/* Protected */}
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/rfqs" element={<ProtectedRoute><RFQsPage /></ProtectedRoute>} />
       <Route path="/rfqs/:id" element={<ProtectedRoute><RFQDetailPage /></ProtectedRoute>} />
       <Route path="/rfqs/:rfqId/compare" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><QuotationComparePage /></ProtectedRoute>} />
       <Route path="/activity" element={<ProtectedRoute><ActivityPage /></ProtectedRoute>} />
 
-      {/* Admin + Procurement + Manager + Vendor */}
+      {/* Admin, Procurement, Manager, Vendor Routes */}
       <Route path="/vendors" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><VendorsPage /></ProtectedRoute>} />
       <Route path="/approvals" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager']}><ApprovalsPage /></ProtectedRoute>} />
       <Route path="/purchase-orders" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><PurchaseOrdersPage /></ProtectedRoute>} />
@@ -63,7 +63,7 @@ function AppRoutes() {
       <Route path="/invoices" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><InvoicesPage /></ProtectedRoute>} />
       <Route path="/invoices/:id" element={<ProtectedRoute allowedRoles={['admin','procurement_officer','manager','vendor']}><InvoiceDetailPage /></ProtectedRoute>} />
 
-      {/* Admin + Manager only */}
+      {/* Admin, Manager Routes */}
       <Route path="/reports" element={<ProtectedRoute allowedRoles={['admin','manager']}><ReportsPage /></ProtectedRoute>} />
 
       {/* Redirects */}

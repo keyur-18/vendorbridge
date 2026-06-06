@@ -9,7 +9,6 @@ const getQuotations = async (req, res) => {
     let params = [rfqId];
 
     if (req.user.role === 'vendor') {
-      // Vendor only sees their own quotations
       const vendorResult = await pool.query('SELECT id FROM vendors WHERE user_id = $1', [req.user.id]);
       if (vendorResult.rowCount === 0) return res.json({ success: true, data: [] });
       query = `SELECT q.*, v.company_name, v.email as vendor_email, v.rating
@@ -24,7 +23,6 @@ const getQuotations = async (req, res) => {
 
     const result = await pool.query(query, params);
     
-    // Attach items to each quotation
     const quotationsWithItems = await Promise.all(
       result.rows.map(async (q) => {
         const items = await pool.query('SELECT * FROM quotation_items WHERE quotation_id = $1', [q.id]);
@@ -48,7 +46,6 @@ const submitQuotation = async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // Get vendor ID for this user
     const vendorResult = await client.query('SELECT id FROM vendors WHERE user_id = $1', [req.user.id]);
     if (vendorResult.rowCount === 0) {
       await client.query('ROLLBACK');
@@ -56,7 +53,6 @@ const submitQuotation = async (req, res) => {
     }
     const vendorId = vendorResult.rows[0].id;
 
-    // Check if vendor is invited
     const invited = await client.query(
       'SELECT * FROM rfq_vendors WHERE rfq_id = $1 AND vendor_id = $2',
       [rfqId, vendorId]
@@ -66,10 +62,8 @@ const submitQuotation = async (req, res) => {
       return res.status(403).json({ success: false, message: 'You are not invited to this RFQ' });
     }
 
-    // Calculate total
     const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 
-    // Check for existing quotation
     const existing = await client.query(
       'SELECT id FROM quotations WHERE rfq_id = $1 AND vendor_id = $2',
       [rfqId, vendorId]
@@ -77,7 +71,6 @@ const submitQuotation = async (req, res) => {
 
     let quotationId;
     if (existing.rowCount > 0) {
-      // Update existing
       quotationId = existing.rows[0].id;
       await client.query(
         `UPDATE quotations SET notes=$1, delivery_days=$2, validity_days=$3, total_amount=$4, status='revised', submitted_at=NOW()
@@ -94,7 +87,6 @@ const submitQuotation = async (req, res) => {
       quotationId = result.rows[0].id;
     }
 
-    // Insert items
     for (const item of items) {
       const totalPrice = item.quantity * item.unit_price;
       await client.query(
@@ -104,7 +96,6 @@ const submitQuotation = async (req, res) => {
       );
     }
 
-    // Update rfq_vendors status
     await client.query(
       `UPDATE rfq_vendors SET status = 'quoted' WHERE rfq_id = $1 AND vendor_id = $2`,
       [rfqId, vendorId]
@@ -113,7 +104,6 @@ const submitQuotation = async (req, res) => {
     await client.query('COMMIT');
     await logActivity(req.user.id, 'SUBMIT', 'quotation', quotationId, `Submitted quotation for RFQ ${rfqId}`);
 
-    // Notify procurement officers
     const officers = await pool.query(`SELECT id FROM users WHERE role = 'procurement_officer'`);
     for (const officer of officers.rows) {
       await createNotification(officer.id, 'New Quotation Received', `A vendor submitted a quotation for your RFQ`, 'info', 'quotation', quotationId);

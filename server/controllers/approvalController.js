@@ -56,7 +56,6 @@ const createApproval = async (req, res) => {
   }
 
   try {
-    // Check existing pending approval
     const existing = await pool.query(
       `SELECT id FROM approvals WHERE quotation_id = $1 AND status = 'pending'`,
       [quotation_id]
@@ -71,7 +70,6 @@ const createApproval = async (req, res) => {
       [rfq_id, quotation_id, req.user.id, approver_id]
     );
 
-    // Notify approver
     if (approver_id) {
       await createNotification(
         approver_id,
@@ -114,13 +112,11 @@ const actOnApproval = async (req, res) => {
 
     const approval = result.rows[0];
 
-    // If approved, update quotation status
     if (status === 'approved') {
       await client.query(
         `UPDATE quotations SET status = 'accepted' WHERE id = $1`,
         [approval.quotation_id]
       );
-      // Update RFQ to awarded
       if (approval.rfq_id) {
         await client.query(`UPDATE rfqs SET status = 'awarded' WHERE id = $1`, [approval.rfq_id]);
       }
@@ -131,7 +127,6 @@ const actOnApproval = async (req, res) => {
       );
     }
 
-    // Notify requester
     if (approval.requested_by) {
       await createNotification(
         approval.requested_by,

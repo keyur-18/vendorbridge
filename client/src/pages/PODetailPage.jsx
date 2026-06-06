@@ -24,7 +24,6 @@ export default function PODetailPage() {
     try {
       const res = await purchaseOrdersAPI.getById(id);
       setPO(res.data.data);
-      // Check if invoice exists
       const invRes = await invoicesAPI.getAll({ page: 1, limit: 100 });
       const inv = invRes.data.data.find(i => i.po_id === id);
       if (inv) setInvoice(inv);

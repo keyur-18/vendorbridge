@@ -12,7 +12,6 @@ router.get('/:id', getRFQById);
 router.put('/:id', authorize('admin', 'procurement_officer'), updateRFQ);
 router.post('/:id/invite', authorize('admin', 'procurement_officer'), inviteVendors);
 
-// Quotations nested under RFQ
 router.get('/:rfqId/quotations', getQuotations);
 router.post('/:rfqId/quotations', authorize('vendor'), submitQuotation);
 

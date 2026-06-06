@@ -193,7 +193,6 @@ export default function RFQsPage() {
   useEffect(() => {
     if (location.state?.openCreateModal && user?.role !== 'vendor') {
       setShowModal(true);
-      // Clear navigation state to prevent re-opening on page refresh
       navigate(location.pathname, { replace: true, state: {} });
     }
   }, [location, user, navigate]);

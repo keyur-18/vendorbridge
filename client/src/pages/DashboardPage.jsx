@@ -50,7 +50,6 @@ export default function DashboardPage() {
     POs: 0,
   })) || [];
   
-  // Merge PO data into chart
   trends?.purchaseOrders?.forEach(d => {
     const month = new Date(d.month).toLocaleDateString('en-IN', { month: 'short' });
     const existing = rfqChartData.find(x => x.month === month);

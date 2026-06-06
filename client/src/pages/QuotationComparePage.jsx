@@ -54,7 +54,6 @@ export default function QuotationComparePage() {
   const minDelivery = quotations.length > 0 ? Math.min(...quotations.map(q => q.delivery_days)) : 0;
   const maxRating = quotations.length > 0 ? Math.max(...quotations.map(q => parseFloat(q.rating || 0))) : 0;
 
-  // Get all unique items across quotations for comparison
   const allItems = rfq?.items || [];
 
   return (

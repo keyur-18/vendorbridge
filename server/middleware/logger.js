@@ -1,8 +1,5 @@
 const pool = require('../db/pool');
 
-/**
- * Log an activity to the audit trail
- */
 const logActivity = async (userId, action, entityType, entityId, description, ipAddress = null) => {
   try {
     await pool.query(
@@ -15,9 +12,6 @@ const logActivity = async (userId, action, entityType, entityId, description, ip
   }
 };
 
-/**
- * Create a notification for a user
- */
 const createNotification = async (userId, title, message, type = 'info', entityType = null, entityId = null) => {
   try {
     await pool.query(

@@ -15,7 +15,6 @@ const getActivityLogs = async (req, res) => {
       idx++;
     }
 
-    // Non-admins only see their own logs
     if (req.user.role !== 'admin') {
       conditions.push(`al.user_id = $${idx}`);
       params.push(req.user.id);
